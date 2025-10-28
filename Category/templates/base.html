@@ -1,0 +1,26 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Каталог товаров{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/products.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% include 'includes/header.html' %}
+    
+    
+    <main>
+        {% include 'includes/messages.html' %}
+        
+        {% block content %}{% endblock %}
+    </main>
+    
+    {% include 'includes/footer.html' %}
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+

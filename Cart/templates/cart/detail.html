@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Корзина покупок{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="cart-title">🛒 Корзина покупок</h1>
+    
+    {% if cart %}
+    
+    
+    {% if has_warnings %}
+    <div class="cart-global-warning">
+        ⚠️ Некоторые товары требуют внимания. Пожалуйста, проверьте количество перед оформлением заказа.
+    </div>
+    {% endif %}
+    
+    <div class="cart-container">
+        <table class="cart-table">
+            <thead>
+                <tr>
+                    <th>Изображение</th>
+                    <th>Товар</th>
+                    <th>Цена</th>
+                    <th>Количество</th>
+                    <th>Сумма</th>
+                    <th>Действие</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item_data in cart_items_with_warnings %}
+                {% with item=item_data.item %}
+                <tr class="cart-item {% if item_data.has_warning %}cart-item-warning{% endif %}">
+                    <td class="cart-item-image" data-label="">
+                        <img src="{{ item.product.get_image_url }}" 
+                             alt="{{ item.product.name }}">
+                    </td>
+                    <td class="cart-item-name" data-label="Товар:">
+                        <a href="{{ item.product.get_absolute_url }}">
+                            {{ item.product.name }}
+                        </a>
+                        <span class="cart-item-category">{{ item.product.category.name }}</span>
+                        
+                        
+                        {% if item_data.has_warning %}
+                        <div class="item-warning">
+                            <span class="warning-icon">⚠️</span>
+                            <span class="warning-text">{{ item_data.warning_message }}</span>
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td class="cart-item-price" data-label="Цена:">{{ item.price|floatformat:2 }} ₽</td>
+                    <td class="cart-item-quantity" data-label="Количество:">
+                        <form action="{% url 'cart:cart_update' item.product.id %}" 
+                              method="post" 
+                              class="quantity-form">
+                            {% csrf_token %}
+                            <div class="quantity-controls-improved" data-max="{{ item.product.stock }}">
+                                <button type="button" class="btn-qty btn-qty-dec" aria-label="Уменьшить">−</button>
+                                <input type="number" 
+                                       name="quantity" 
+                                       value="{{ item.quantity }}" 
+                                       min="1"
+                                       max="{{ item.product.stock }}"
+                                       class="quantity-input-improved {% if item_data.has_warning %}input-warning{% endif %}">
+                                <button type="button" class="btn-qty btn-qty-inc" aria-label="Увеличить">+</button>
+                                <button type="submit" class="btn-update" title="Обновить количество">✓</button>
+                            </div>
+                            <small class="stock-hint">
+                                {% if item.product.stock > 0 %}
+                                    На складе: {{ item.product.stock }} шт
+                                {% else %}
+                                    <span class="out-of-stock">Нет в наличии</span>
+                                {% endif %}
+                            </small>
+                        </form>
+                    </td>
+                    <td class="cart-item-total" data-label="Сумма:">{{ item.total_price|floatformat:2 }} ₽</td>
+                    <td class="cart-item-actions" data-label="">
+                        <form action="{% url 'cart:cart_remove' item.product.id %}" 
+                              method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-remove" title="Удалить товар">
+                                🗑️
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endwith %}
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div class="cart-summary">
+            <div class="cart-summary-content">
+                <h2>Итого</h2>
+                <div class="cart-summary-row">
+                    <span>Количество товаров:</span>
+                    <strong>{{ cart|length }} шт.</strong>
+                </div>
+                <div class="cart-summary-row cart-total">
+                    <span>Общая сумма:</span>
+                    <strong class="total-price">{{ cart.get_total_price|floatformat:2 }} ₽</strong>
+                </div>
+                
+                {% if has_warnings %}
+                <div class="checkout-warning">
+                    ⚠️ Проверьте количество товаров перед оформлением
+                </div>
+                {% endif %}
+                
+                <div class="cart-actions">
+                    <a href="{% url 'category:product_list' %}" class="btn-continue">
+                        ← Продолжить покупки
+                    </a>
+                    <button class="btn-checkout" disabled title="Оформление заказа - в разработке">
+                        Оформить заказ →
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% else %}
+    <div class="cart-empty">
+        <div class="cart-empty-icon">🛒</div>
+        <h2>Ваша корзина пуста</h2>
+        <p>Добавьте товары из каталога, чтобы начать покупки</p>
+        <a href="{% url 'category:product_list' %}" class="btn-to-catalog">
+            Перейти в каталог
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+(function(){
+  const containers = document.querySelectorAll('.quantity-controls-improved');
+  containers.forEach(function(box){
+    const input = box.querySelector('input[type="number"]');
+    const dec = box.querySelector('.btn-qty-dec');
+    const inc = box.querySelector('.btn-qty-inc');
+    if(!input || !dec || !inc) return;
+    const min = parseInt(input.getAttribute('min') || '1', 10);
+    const maxAttr = input.getAttribute('max');
+    const max = maxAttr ? parseInt(maxAttr, 10) : Number.POSITIVE_INFINITY;
+    function clamp(val){
+      if (isNaN(val)) return min;
+      return Math.max(min, Math.min(max, val));
+    }
+    dec.addEventListener('click', function(){
+      input.value = clamp(parseInt(input.value || '1', 10) - 1);
+    });
+    inc.addEventListener('click', function(){
+      input.value = clamp(parseInt(input.value || '1', 10) + 1);
+    });
+  });
+})();
+</script>
+{% endblock %}

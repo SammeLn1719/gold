@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }} - Детали товара{% endblock %}
+
+{% block content %}
+<div class="container">
+    <a href="{% url 'category:product_list' %}" class="btn-back">← Назад к каталогу</a>
+
+    <div class="product-detail-grid">
+        <div class="product-detail-image-wrapper">
+            <img src="{{ product.get_image_url }}" 
+                 alt="{{ product.name }}" 
+                 class="product-detail-image">
+        </div>
+
+        <div class="product-detail-info">
+            <span class="product-category-badge">{{ product.category.name }}</span>
+            <h1>{{ product.name }}</h1>
+            
+            <div class="product-detail-price">{{ product.price|floatformat:2 }} ₽</div>
+            
+            <div class="product-detail-description">
+                <h3>Описание:</h3>
+                <p>{{ product.description }}</p>
+            </div>
+
+            <div>
+                {% if product.stock > 0 %}
+                    <span class="product-detail-stock {% if product.stock < 10 %}low{% endif %}">
+                        В наличии: {{ product.stock }} шт.
+                    </span>
+                {% else %}
+                    <span class="product-detail-stock out">
+                        Нет в наличии
+                    </span>
+                {% endif %}
+            </div>
+            
+            {% if user.is_authenticated %}
+                {% if product.stock > 0 %}
+                <form action="{% url 'cart:cart_add' product.id %}" method="post" class="add-to-cart-form">
+                    {% csrf_token %}
+                    <div class="quantity-selector">
+                        <label for="quantity">Количество:</label>
+                        <input type="number" 
+                               name="quantity" 
+                               value="1" 
+                               min="1" 
+                               max="{{ product.stock }}"
+                               id="quantity"
+                               class="quantity-input-detail">
+                    </div>
+                    <button type="submit" class="btn-add-to-cart">
+                        🛒 Добавить в корзину
+                    </button>
+                </form>
+                {% else %}
+                <button class="btn-add-to-cart" disabled>
+                    Нет в наличии
+                </button>
+                {% endif %}
+            {% else %}
+                <div class="auth-required-message">
+                    <p>🔒 Для добавления товаров в корзину необходимо <a href="{% url 'accounts:login' %}?next={{ request.path }}">войти</a> или <a href="{% url 'accounts:register' %}">зарегистрироваться</a>.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if related_products %}
+    <div class="related-products">
+        <h2>Похожие товары</h2>
+        <div class="products-grid">
+            {% for related_product in related_products %}
+            <div class="product-card">
+                <div class="product-image-container">
+                    <img src="{{ related_product.get_image_url }}" 
+                         alt="{{ related_product.name }}" 
+                         class="product-image">
+                </div>
+                
+                <div class="product-info">
+                    <span class="product-category-badge">{{ related_product.category.name }}</span>
+                    <h3 class="product-name">{{ related_product.name }}</h3>
+                    
+                    <div class="product-footer">
+                        <div class="product-price">{{ related_product.price|floatformat:2 }} ₽</div>
+                        <a href="{{ related_product.get_absolute_url }}" class="btn-detail">
+                            Подробнее →
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
