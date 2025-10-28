@@ -1,47 +1,27 @@
-# Команды для запуска
+# Gold Project
 
+## Запуск проекта
+
+### 1. Запуск приложения
+Для запуска проекта выполните команду:
 ```bash
-# 1. Клонирование репозитория
-git clone <repository-url>
-cd django-ecommerce
-
-# 2. Создание .env файла
-cat > .env << EOF
-POSTGRES_DB=ecommerce_db
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=password123
-POSTGRES_HOST=db
-POSTGRES_PORT=5432
-SECRET_KEY=your-secret-key-here
-DEBUG=True
-EOF
-
-# 3. Запуск контейнеров
-docker-compose up --build
-
-# 4. В новом терминале - миграции
-docker-compose exec web python manage.py migrate
-
-# 5. Создание суперпользователя
-docker-compose exec web python manage.py createsuperuser
-
-# 6. Сбор статических файлов
-docker-compose exec web python manage.py collectstatic --noinput
+./start.sh
 ```
 
-## Доступ к приложению
-
-- **Сайт**: http://localhost:8000
-
-## Остановка
-
+### 2. Добавление данных в базу данных
+Для добавления тестовых данных в базу данных выполните команду:
 ```bash
-docker-compose down
+docker-compose exec web python setup_data.py
 ```
 
-## Очистка
+## Описание команд
 
-```bash
-docker-compose down -v
-docker system prune -a
-```
+- `start.sh` - скрипт для запуска всего проекта (Docker контейнеры, база данных и веб-приложение)
+- `setup_data.py` - скрипт для инициализации базы данных тестовыми данными
+
+## Требования
+- Linux/macOS/wsl
+- Docker
+- Docker Compose
+
+Убедитесь, что Docker и Docker Compose установлены на вашей системе перед выполнением команд.
